@@ -1,6 +1,6 @@
-// Natural-sounding text-to-speech via ElevenLabs.
-const API = "https://api.elevenlabs.io/v1";
-const KEY = () => process.env.ELEVENLABS_API_KEY;
+// Natural-sounding text-to-speech via the ElevenLabs SDK.
+import { elevenlabs, ElevenLabsError } from "./elevenlabs.mjs";
+
 const MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2";
 
 // Curated premade voices. Override with ELEVENLABS_VOICES='[{"id":"...","name":"...","description":"..."}]'.
@@ -24,56 +24,54 @@ function curated() {
 
 let cache = null;
 
-/** Curated voices that actually exist on the account (checked once, then cached). */
+/** Curated voices that exist on the account (checked once, then cached). */
 export async function listVoices() {
-  if (!KEY()) return [];
+  const client = elevenlabs();
+  if (!client) return [];
   if (cache) return cache;
   const wanted = curated();
   try {
-    const res = await fetch(`${API}/voices`, { headers: { "xi-api-key": KEY() } });
-    if (!res.ok) throw new Error(`voices ${res.status}`);
-    const { voices = [] } = await res.json();
-    const available = new Map(voices.map((v) => [v.voice_id, v]));
+    const { voices = [] } = await client.voices.getAll();
+    const available = new Set(voices.map((v) => v.voiceId));
     const found = wanted.filter((v) => available.has(v.id));
     // If none of the curated IDs exist, fall back to the account's first few voices.
     cache = found.length
       ? found
-      : voices.slice(0, 6).map((v) => ({ id: v.voice_id, name: v.name, description: v.labels ? Object.values(v.labels).join(" · ") : "" }));
+      : voices.slice(0, 6).map((v) => ({ id: v.voiceId, name: v.name, description: v.labels ? Object.values(v.labels).join(" · ") : "" }));
   } catch (err) {
-    console.warn("Could not verify ElevenLabs voices:", err.message);
+    // e.g. the key lacks the voices_read permission: use the curated list as-is.
+    console.warn("Could not verify ElevenLabs voices:", err instanceof ElevenLabsError ? `${err.statusCode} ${err.message}` : err.message);
     return wanted;
   }
   return cache;
 }
 
 export function voiceEnabled() {
-  return Boolean(KEY());
+  return Boolean(elevenlabs());
 }
 
-/** Returns a fetch Response whose body is MP3 audio. */
+/** Returns a web ReadableStream of MP3 audio. */
 export async function synthesize(text, voiceId) {
+  const client = elevenlabs();
   const voices = await listVoices();
   const voice = voices.find((v) => v.id === voiceId) || voices[0];
-  if (!voice) {
-    const err = new Error("No voices are available.");
-    err.status = 503;
-    throw err;
+  if (!client || !voice) {
+    throw Object.assign(new Error("No voices are available."), { status: 503 });
   }
-  const res = await fetch(`${API}/text-to-speech/${encodeURIComponent(voice.id)}?output_format=mp3_44100_128`, {
-    method: "POST",
-    headers: { "xi-api-key": KEY(), "content-type": "application/json", accept: "audio/mpeg" },
-    body: JSON.stringify({
+  try {
+    return await client.textToSpeech.convert(voice.id, {
       text,
-      model_id: MODEL,
-      voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.25, use_speaker_boost: true },
-    }),
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    const err = new Error(`Voice service error (${res.status})`);
-    err.status = res.status === 401 ? 503 : 502;
-    err.detail = detail.slice(0, 300);
+      modelId: MODEL,
+      outputFormat: "mp3_44100_128",
+      voiceSettings: { stability: 0.45, similarityBoost: 0.8, style: 0.25, useSpeakerBoost: true },
+    });
+  } catch (err) {
+    if (err instanceof ElevenLabsError) {
+      throw Object.assign(new Error(`Voice service error (${err.statusCode ?? "unknown"})`), {
+        status: err.statusCode === 401 ? 503 : 502,
+        detail: String(err.message).slice(0, 300),
+      });
+    }
     throw err;
   }
-  return res;
 }

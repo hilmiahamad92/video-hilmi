@@ -107,9 +107,9 @@ async function api(req, res, url) {
     const b = await readJson(req);
     const text = str(b.text, 800).trim();
     if (!text) return json(res, 400, { error: "Nothing to say." });
-    const upstream = await synthesize(text, str(b.voice, 64));
+    const audio = await synthesize(text, str(b.voice, 64));
     res.writeHead(200, { "content-type": "audio/mpeg", "cache-control": "no-store" });
-    return Readable.fromWeb(upstream.body).pipe(res);
+    return Readable.fromWeb(audio).pipe(res);
   }
 
   return json(res, 404, { error: "Not found" });
