@@ -125,7 +125,9 @@ export function analyse(text, seconds) {
     score -= 10;
     tips.push({ kind: "warn", msg: "Short answer. Try to speak for at least 30 seconds to build stamina." });
   }
-  if (wpm < 105) {
+  if (seconds < 10) {
+    // Too short for a meaningful pace reading.
+  } else if (wpm < 105) {
     score -= 10;
     tips.push({ kind: "warn", msg: `Pace ${wpm} wpm is on the slow side. Aim for 130–160 and keep energy up.` });
   } else if (wpm > 175) {

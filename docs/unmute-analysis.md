@@ -52,9 +52,7 @@ They also enforce **daily limits on AI feedback**, presumably to control cost.
    (Supabase fits), an AI feedback endpoint with a daily limit, and sign-in.
 2. Add **confidence self-ratings** at onboarding and then periodically, so
    progress shows up as a chart.
-3. Paywall on the web: Stripe, or RevenueCat Web Billing (which uses Stripe), can
-   share subscriptions with a future native app.
-4. A mascot and a distinctive art style are a big part of their brand. Outspoken
+3. A mascot and a distinctive art style are a big part of their brand. Outspoken
    needs its own identity, not theirs.
 
 ## Note on their terms

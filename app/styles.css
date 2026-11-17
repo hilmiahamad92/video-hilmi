@@ -204,3 +204,13 @@ audio { width: 100%; margin-top: 8px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* AI coach & voice */
+.coach { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); margin-top: 16px; }
+.coach-summary { font-size: 1.05rem; margin-top: 8px; }
+.coach.loading .dots::after { content: "…"; animation: dots 1.2s steps(3) infinite; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; }
+@keyframes dots { from { width: 0; } to { width: 1.2em; } }
+.check { display: flex; gap: 10px; align-items: center; margin-top: 14px; font-weight: 500; }
+.check input { width: 20px; height: 20px; accent-color: var(--primary); }
+select.input { appearance: none; padding-right: 28px; }
+.voice-card .row { gap: 8px; }

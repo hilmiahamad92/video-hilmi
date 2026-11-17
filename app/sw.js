@@ -1,5 +1,5 @@
 // Offline-first service worker. Bump VERSION whenever app files change.
-const VERSION = "outspoken-v1";
+const VERSION = "outspoken-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,8 @@ const ASSETS = [
   "./js/content.js",
   "./js/store.js",
   "./js/speech.js",
+  "./js/api.js",
+  "./js/voice.js",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -30,7 +32,8 @@ self.addEventListener("activate", (e) => {
 // Stale-while-revalidate for same-origin GETs: instant from cache, refreshed in the background.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== self.location.origin || url.pathname.includes("/api/")) return;
   e.respondWith(
     caches.open(VERSION).then(async (cache) => {
       const cached = await cache.match(req, { ignoreSearch: true });
