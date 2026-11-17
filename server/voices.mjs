@@ -1,7 +1,7 @@
 // Natural-sounding text-to-speech via the ElevenLabs SDK.
 import { elevenlabs, ElevenLabsError } from "./elevenlabs.mjs";
 
-const MODEL = process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2";
+const MODEL = process.env.ELEVENLABS_MODEL || "eleven_flash_v2_5";
 
 // Curated premade voices. Override with ELEVENLABS_VOICES='[{"id":"...","name":"...","description":"..."}]'.
 const DEFAULT_VOICES = [
